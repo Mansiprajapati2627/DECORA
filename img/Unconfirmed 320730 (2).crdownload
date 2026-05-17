@@ -1,0 +1,60 @@
+
+// Handle Booking Form
+document.getElementById("bookingForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+  alert("Thank you for booking with DECORA! We will contact you soon.");
+  this.reset();
+});
+
+// Open Review Modal
+function openReviewForm() {
+  document.getElementById("reviewModal").style.display = "flex";
+}
+
+// Close Review Modal
+function closeReviewForm() {
+  document.getElementById("reviewModal").style.display = "none";
+}
+
+// Optional: Close modal when clicking outside
+window.onclick = function(event) {
+  let modal = document.getElementById("reviewModal");
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+}
+
+// FAQ Toggle
+const faqs = document.querySelectorAll(".faq-question");
+faqs.forEach(faq => {
+  faq.addEventListener("click", () => {
+    faq.classList.toggle("active");
+    let answer = faq.nextElementSibling;
+    if (answer.style.maxHeight) {
+      answer.style.maxHeight = null;
+    } else {
+      answer.style.maxHeight = answer.scrollHeight + "px";
+    }
+  });
+});
+// // Handle Booking Form
+// function toggleMenu() {
+//   document.getElementById("navMenu").classList.toggle("active");
+// }
+
+// const form = document.getElementById("bookingForm");
+
+// form.addEventListener("submit", function (e) {
+//   e.preventDefault();
+
+//   const name = document.getElementById("name").value;
+//   const event = document.getElementById("event").value;
+//   const date = document.getElementById("date").value;
+//   const packageSelected = document.getElementById("package").value;
+
+//   alert(
+//     `🎉 Booking Confirmed!\n\nName: ${name}\nEvent: ${event}\nDate: ${date}\nPackage: ${packageSelected}\n\nThank you for choosing DECORA!`
+//   );
+
+//   form.reset();
+// });

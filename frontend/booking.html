@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Booking - No Login Required</title>
+    <style>
+        /* Basic styling for the booking page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .package-display {
+            display: flex;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        .selected-package {
+            flex: 1;
+        }
+        .selected-package img {
+            width: 100%;
+            border-radius: 8px;
+        }
+        .similar-gallery {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        .similar-gallery img {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .similar-gallery img:hover {
+            transform: scale(1.05);
+        }
+        .booking-form {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .package-info {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+        }
+        .close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Book Your Event</h1>
+        
+        <div id="selectedPackage" class="package-display">
+            <div class="selected-package">
+                <img id="selectedImage" src="" alt="Selected Package">
+                <div class="package-info">
+                    <h2 id="packageTitle">Package Title</h2>
+                    <p><strong>Theme:</strong> <span id="packageTheme"></span></p>
+                    <p><strong>Package Type:</strong> <span id="packageType"></span></p>
+                </div>
+            </div>
+            
+            <div class="similar-options">
+                <h3>Similar Options</h3>
+                <div id="similarGallery" class="similar-gallery"></div>
+            </div>
+        </div>
+        
+        <div id="bookingFormSection">
+            <h2>Booking Information</h2>
+            <form id="bookingForm" class="booking-form">
+                <div class="form-group">
+                    <label for="bookingname">Full Name *</label>
+                    <input type="text" id="bookingname" name="bookingname" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="event">Event Type *</label>
+                    <select id="event" name="event" required>
+                        <option value="">Select Event Type</option>
+                        <option value="themed">Themed</option>
+                        <option value="engagement">Engagement</option>
+                        <option value="BabyShower">BabyShower</option>
+                        <option value="seminar"> Seminar</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date">Event Date *</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="time">Event Time *</label>
+                    <input type="time" id="time" name="time" required>
+                </div>
+                
+                <button type="submit">Book Now</button>
+            </form>
+        </div>
+    </div>
+<script>
+ // booking.html JavaScript - NO LOCALSTORAGE
+let selectedPackageData = null;
+let currentUser = null;
+
+// Initialize booking page
+document.addEventListener('DOMContentLoaded', async function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const theme = urlParams.get('theme');
+    const packageType = urlParams.get('package');
+    const decoration = urlParams.get('decoration');
+    const title = urlParams.get('title');
+
+    if (theme && packageType && decoration) {
+        selectedPackageData = {
+            theme,
+            packageType,
+            decoration: parseInt(decoration),
+            title: decodeURIComponent(title || '')
+        };
+        loadSelectedPackage();
+    }
+
+    // Check if user is logged in
+    await checkAuthStatus();
+    
+    if (currentUser) {
+        // User is logged in - show booking form and pre-fill name
+        document.getElementById('bookingname').value = currentUser.name;
+        document.getElementById('bookingFormSection').style.display = 'block';
+    } else {
+        // User is NOT logged in - show login required message
+        document.getElementById('bookingFormSection').style.display = 'none';
+        showLoginRequired();
+    }
+
+    // FIXED: Setup booking form with proper event listener
+    setupBookingForm();
+});
+
+// FIXED: Proper booking form setup - DATABASE STORAGE FIXED
+// FIXED: Proper booking form setup - MATCHING BACKEND REQUIREMENTS
+// FIXED: Proper booking form setup - MATCHING BACKEND REQUIREMENTS
+function setupBookingForm() {
+    const bookingForm = document.getElementById('bookingForm');
+    if (!bookingForm) {
+        console.log("❌ Booking form not found");
+        return;
+    }
+
+    console.log("✅ Booking form found, setting up fixed event listener");
+    
+    // Remove HTML5 validation to prevent conflicts
+    const requiredInputs = bookingForm.querySelectorAll('[required]');
+    requiredInputs.forEach(input => {
+        input.removeAttribute('required');
+    });
+
+    // Remove any existing event listeners by cloning the form
+    const newBookingForm = bookingForm.cloneNode(true);
+    bookingForm.parentNode.replaceChild(newBookingForm, bookingForm);
+
+    // Add fresh event listener
+    newBookingForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log("📅 Booking form submitted - FORM IS WORKING!");
+        
+        // Check if user is logged in
+        if (!currentUser) {
+            alert("🔒 Please login to book an event.");
+            openLoginForm();
+            return;
+        }
+        
+        if (!selectedPackageData) {
+            alert('❌ Please select a package first.');
+            return;
+        }
+        
+        // Manual validation instead of HTML5 validation
+        const bookingname = document.getElementById('bookingname');
+        const phone = document.getElementById('phone');
+        const eventType = document.getElementById('event');
+        const date = document.getElementById('date');
+        const time = document.getElementById('time');
+        
+        if (!bookingname.value.trim()) {
+            alert("❌ Please enter your full name");
+            return;
+        }
+        
+        if (!phone.value.trim()) {
+            alert("❌ Please enter your phone number");
+            return;
+        }
+        
+        if (!eventType.value) {
+            alert("❌ Please select an event type");
+            return;
+        }
+        
+        if (!date.value) {
+            alert("❌ Please select a date");
+            return;
+        }
+        
+        if (!time.value) {
+            alert("❌ Please select a time");
+            return;
+        }
+        
+        const submitButton = this.querySelector('button[type="submit"]');
+        
+        // Show processing state
+        if (submitButton) {
+            submitButton.textContent = "Processing...";
+            submitButton.disabled = true;
+        }
+        
+        try {
+            // FIXED: Match EXACTLY what your Flask API expects - CORRECTED FIELDS
+            const bookingData = {
+                bookingname: bookingname.value,
+                phone: phone.value,
+                event: eventType.value,
+                date: date.value,
+                time: time.value
+            };
+
+            console.log("✅ Booking data being sent to server:", bookingData);
+            
+            const response = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(bookingData)
+            });
+            
+            const data = await response.json();
+            console.log("Server response:", data);
+            
+            if (data.success) {
+                alert(`🎉 Booking Confirmed!\n\nEvent: ${bookingData.event}\nDate: ${bookingData.date}\nTime: ${bookingData.time}\n\nThank you for choosing DECORA! Your booking ID: ${data.booking_id}`);
+                
+                // DON'T reset the form - keep the data visible
+                console.log("✅ Booking successfully stored in database with ID:", data.booking_id);
+                
+                // Optional: Redirect to home page after successful booking
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+                
+            } else {
+                alert("❌ " + (data.message || "Booking failed! Please check if all required fields are filled."));
+                // Don't reset form on error - user can see what they entered
+            }
+        } catch (error) {
+            console.error('💥 Error creating booking:', error);
+            alert("❌ An error occurred. Please try again. Error: " + error.message);
+        } finally {
+            // Reset button state
+            if (submitButton) {
+                submitButton.textContent = "Book Now";
+                submitButton.disabled = false;
+            }
+        }
+    });
+    
+    console.log("✅ Booking form event listener setup complete");
+}
+// Check authentication status
+async function checkAuthStatus() {
+    try {
+        console.log("🔍 Checking authentication status...");
+        const response = await fetch('/api/check-auth', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        console.log("Auth check response:", data);
+        
+        if (data.logged_in) {
+            currentUser = data.user;
+            console.log("✅ User is logged in:", currentUser);
+        } else {
+            console.log("❌ User is not logged in");
+            currentUser = null;
+        }
+    } catch (error) {
+        console.error('❌ Error checking auth status:', error);
+        currentUser = null;
+    }
+}
+
+function showLoginRequired() {
+    const container = document.querySelector('.container');
+    const loginRequiredHTML = `
+        <div id="loginRequired" style="text-align: center; padding: 50px; background: #f9f9f9; border-radius: 10px; margin: 20px 0;">
+            <h2>🔒 Login Required</h2>
+            <p>Please login to book events and access all features.</p>
+            <button onclick="openLoginForm()" style="background: #e5ada8; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 20px;">
+                Login / Sign Up
+            </button>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', loginRequiredHTML);
+}
+
+function loadSelectedPackage() {
+    if (!selectedPackageData) return;
+
+    const packageInfo = themePackages[selectedPackageData.theme]?.[selectedPackageData.packageType]?.[selectedPackageData.decoration - 1];
+    
+    if (packageInfo) {
+        document.getElementById('selectedImage').src = packageInfo.img;
+        document.getElementById('selectedImage').alt = packageInfo.title;
+        document.getElementById('packageTitle').textContent = packageInfo.title;
+        document.getElementById('packageTheme').textContent = selectedPackageData.theme;
+        document.getElementById('packageType').textContent = selectedPackageData.packageType;
+        document.getElementById('selectedPackage').style.display = 'flex';
+        document.getElementById('selectedPackage').style.opacity = '1';
+        
+        // Load similar images
+        loadSimilarImages();
+    }
+}
+
+function loadSimilarImages() {
+    const similarGallery = document.getElementById('similarGallery');
+    similarGallery.innerHTML = '';
+    
+    const currentTheme = selectedPackageData.theme;
+    const currentPackage = selectedPackageData.packageType;
+    
+    const similarPackages = themePackages[currentTheme]?.[currentPackage] || [];
+    
+    similarPackages.forEach((item, index) => {
+        if (index !== selectedPackageData.decoration - 1) {
+            const img = document.createElement('img');
+            img.src = item.img;
+            img.alt = item.title;
+            img.title = item.title;
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', () => {
+                // Update the main selected package
+                document.getElementById('selectedImage').src = item.img;
+                document.getElementById('packageTitle').textContent = item.title;
+                // Update the selected package data
+                selectedPackageData.decoration = index + 1;
+                selectedPackageData.title = item.title;
+            });
+            similarGallery.appendChild(img);
+        }
+    });
+}
+
+// Listen for login events from other pages
+window.addEventListener('userLoggedIn', async function() {
+    await checkAuthStatus();
+    if (currentUser) {
+        // User logged in - show booking form and pre-fill name
+        document.getElementById('bookingname').value = currentUser.name;
+        document.getElementById('bookingFormSection').style.display = 'block';
+        
+        // Remove login required message if exists
+        const loginRequired = document.getElementById('loginRequired');
+        if (loginRequired) {
+            loginRequired.remove();
+        }
+    }
+});
+
+// Listen for logout events
+window.addEventListener('userLoggedOut', function() {
+    // Hide booking form and show login required
+    document.getElementById('bookingFormSection').style.display = 'none';
+    showLoginRequired();
+});
+
+// Login modal functions
+function openLoginForm() {
+    // Create a simple login modal if not exists
+    const existingModal = document.getElementById('loginModal');
+    if (!existingModal) {
+        const loginModalHTML = `
+            <div id="loginModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closeLoginForm()">×</span>
+                    <h2>Login</h2>
+                    <form id="loginForm">
+                        <div style="margin-bottom: 15px;">
+                            <label for="userEmail">Email:</label>
+                            <input type="email" id="userEmail" required style="width: 100%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label for="userPassword">Password:</label>
+                            <input type="password" id="userPassword" required style="width: 100%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        <button type="submit" style="background: #e5ada8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">Login</button>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', loginModalHTML);
+        
+        // Add form submission handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const userEmail = document.getElementById('userEmail').value;
+            const userPassword = document.getElementById('userPassword').value;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: userEmail,
+                        password: userPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeLoginForm();
+                    alert("Login successful!");
+                    window.dispatchEvent(new Event('userLoggedIn'));
+                } else {
+                    alert(data.message || "Login failed!");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("An error occurred. Please try again.");
+            }
+        });
+    }
+    
+    document.getElementById('loginModal').style.display = 'flex';
+}
+
+function closeLoginForm() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.style.display = 'none';
+    }
+}
+
+// Theme packages data (keep this as it's just for display)
+const themePackages = {
+    Themed: {
+        Basic: [
+            { img: "../img/ironman.jpeg", title: "Iron Man Theme" },
+            { img: "../img/themed.jpeg", title: "Fantasy Adventure" },
+            { img: "../img/avengers.jpeg", title: "Avengers Theme" }
+        ],
+        Moderate: [
+            { img: "../img/themed1.jpeg", title: "Enchanted Forest" },
+            { img: "../img/themed2.jpeg", title: "Space Odyssey" },
+            { img: "../img/themed3.jpeg", title: "Underwater World" }
+        ],
+        Luxury: [
+            { img: "../img/themed4.jpeg", title: "Royal Palace" },
+            { img: "../img/themed5.jpeg", title: "Hollywood Red Carpet" },
+            { img: "../img/themed6.jpeg", title: "Fairy Tale Castle" }
+        ]
+    },
+    Engagement: {
+        Basic: [
+            { img: "../img/engagement1.jpeg", title: "Classic Romance" },
+            { img: "../img/engagement2.jpeg", title: "Garden Party" },
+            { img: "../img/engagement3.jpeg", title: "Elegant Minimalist" }
+        ],
+        Moderate: [
+            { img: "../img/engagement4.jpeg", title: "Royal Engagement" },
+            { img: "../img/engagement5.jpeg", title: "Floral Fantasy" },
+            { img: "../img/engagement6.jpeg", title: "Vintage Glamour" }
+        ],
+        Luxury: [
+            { img: "../img/engagement7.jpeg", title: "Grand Celebration" },
+            { img: "../img/engagement8.jpeg", title: "Luxury Ballroom" },
+            { img: "../img/engagement9.jpeg", title: "Five-Star Luxury" }
+        ]
+    },
+    BabyShower: {
+        Basic: [
+            { img: "../img/baby1.jpeg", title: "Sweet Pastels" },
+            { img: "../img/baby2.jpeg", title: "Baby Animals" },
+            { img: "../img/baby3.jpeg", title: "Storybook Theme" }
+        ],
+        Moderate: [
+            { img: "../img/baby4.jpeg", title: "Enchanted Garden" },
+            { img: "../img/baby5.jpeg", title: "Royal Nursery" },
+            { img: "../img/baby6.jpeg", title: "Dreamy Clouds" }
+        ],
+        Luxury: [
+            { img: "../img/baby7.jpeg", title: "Fairytale Palace" },
+            { img: "../img/baby8.jpeg", title: "Luxury Celebration" },
+            { img: "../img/babyshower.jpeg", title: "Grand Ballroom" }
+        ]
+    },
+    Seminar: {
+        Basic: [
+            { img: "../img/seminar1.jpeg", title: "Professional Setup" },
+            { img: "../img/seminar2.jpeg", title: "Corporate Standard" },
+            { img: "../img/seminar3.jpeg", title: "Business Conference" }
+        ],
+        Moderate: [
+            { img: "../img/seminar4.jpeg", title: "Executive Meeting" },
+            { img: "../img/seminar5.jpeg", title: "Premium Conference" },
+            { img: "../img/seminar6.jpeg", title: "Corporate Summit" }
+        ],
+        Luxury: [
+            { img: "../img/seminar7.jpeg", title: "International Conference" },
+            { img: "../img/seminar8.jpeg", title: "Executive Summit" },
+            { img: "../img/seminar9.jpeg", title: "Global Convention" }
+        ]
+    }
+};
+</script>
+</body>
+</html>

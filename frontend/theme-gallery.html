@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DECORA — Theme Gallery</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    .login-prompt {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(26,20,16,.65);
+      backdrop-filter: blur(6px);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-prompt-content {
+      background: white;
+      padding: 44px 40px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      animation: modalPop .35s ease both;
+    }
+    .login-prompt-content h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px; font-weight: 300;
+      color: var(--ink); margin-bottom: 12px;
+    }
+    .login-prompt-content p { font-size: 15px; color: var(--warm-mid); margin-bottom: 28px; line-height: 1.6; }
+    .prompt-buttons { display: flex; gap: 14px; justify-content: center; }
+    .prompt-btn {
+      padding: 12px 28px; border: none; border-radius: 40px;
+      cursor: pointer; font-family: 'Jost', sans-serif;
+      font-size: 13px; font-weight: 600; letter-spacing: .06em;
+      text-transform: uppercase; transition: all .3s;
+    }
+    .prompt-login  { background: var(--rose); color: white; }
+    .prompt-login:hover  { background: var(--rose-dk); transform: translateY(-2px); }
+    .prompt-cancel { background: var(--mist); color: var(--warm-mid); }
+    .prompt-cancel:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="theme-gallery-body">
+
+<!-- ===== NAVBAR ===== -->
+<header>
+  <nav class="navbar scrolled" id="navbar">
+    <div class="logo" style="color:var(--ink);">
+      <a href="index.html" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;">
+        <img src="../img/WhatsApp Image 2025-09-22 at 1.13.30 AM (1).jpeg" alt="Decora logo">
+        DECORA
+      </a>
+    </div>
+
+    <button class="hamburger" onclick="toggleMenu()" aria-label="Menu" style="color:var(--ink);">☰</button>
+
+    <ul class="nav-links" id="navMenu">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="index.html#themes">Categories</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#reviews">Reviews</a></li>
+      <li><a href="index.html#contact">Contact</a></li>
+      <li id="customizeLink" style="display:none;"><a href="#" onclick="openCustomizationForm()">Customization</a></li>
+      <li id="bookingLink" style="display:none;"><a href="booking.html">Book Now</a></li>
+      <li class="user-actions">
+        <div id="userSection">
+          <button class="login-btn" onclick="openLoginForm()">Login / Sign Up</button>
+        </div>
+      </li>
+    </ul>
+  </nav>
+</header>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <button class="close" onclick="closeLoginForm()">×</button>
+    <h2 id="loginTitle">Welcome back</h2>
+    <p style="font-size:14px;color:var(--warm-mid);margin-top:4px;">Sign in to your DECORA account</p>
+    <form id="loginForm">
+      <div id="nameField" style="display:none;">
+        <label for="userName">Full Name</label>
+        <input type="text" id="userName" placeholder="Your full name" />
+      </div>
+      <label for="userEmail">Email</label>
+      <input type="email" id="userEmail" placeholder="hello@email.com" />
+      <label for="userPassword">Password</label>
+      <input type="password" id="userPassword" placeholder="••••••••" />
+      <button type="submit" id="loginSubmit">Login</button>
+      <p id="toggleText">Don't have an account? <a href="#" onclick="toggleSignup(); return false;">Sign up</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- Login Prompt -->
+<div id="loginPrompt" class="login-prompt">
+  <div class="login-prompt-content">
+    <h3>Login Required</h3>
+    <p>Please login to book this decoration package.</p>
+    <div class="prompt-buttons">
+      <button class="prompt-btn prompt-login" onclick="openLoginFormFromPrompt()">Login Now</button>
+      <button class="prompt-btn prompt-cancel" onclick="closeLoginPrompt()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gallery Content -->
+<h1 class="theme-title" id="theme-title">Theme Gallery</h1>
+
+<div class="package-section">
+  <h2 class="package-title">Basic Package</h2>
+  <p class="package-description">Simple yet elegant decorations perfect for intimate gatherings</p>
+  <div class="gallery-container" id="basicGallery"></div>
+</div>
+
+<div class="package-section">
+  <h2 class="package-title">Premium Package</h2>
+  <p class="package-description">Enhanced decorations with premium elements for memorable events</p>
+  <div class="gallery-container" id="moderateGallery"></div>
+</div>
+
+<div class="package-section">
+  <h2 class="package-title">Luxury Package</h2>
+  <p class="package-description">Luxurious and comprehensive decorations for grand celebrations</p>
+  <div class="gallery-container" id="luxuryGallery"></div>
+</div>
+
+<div style="text-align:center;">
+  <button class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-logo">
+      <h2>DECORA</h2>
+      <p>Planning · Designing · Events</p>
+      <a href="admin-dashboardfinal.html" class="admin-login">Admin Login</a>
+    </div>
+    <div class="footer-links">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#themes">Services</a></li>
+        <li><a href="theme-gallery.html">Gallery</a></li>
+        <li><a href="index.html#about">About Us</a></li>
+        <li><a href="index.html#contact">Contact Us</a></li>
+      </ul>
+    </div>
+    <div class="footer-services">
+      <h3>Services</h3>
+      <ul>
+        <li><a href="theme-gallery.html?theme=Engagement">Weddings &amp; Engagements</a></li>
+        <li><a href="theme-gallery.html?theme=Seminar">Corporate Events</a></li>
+        <li><a href="theme-gallery.html?theme=Themed">Special Events</a></li>
+      </ul>
+    </div>
+    <div class="footer-social">
+      <h3>Follow Us</h3>
+      <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p><a href="#">Privacy</a> · <a href="#">Terms &amp; Conditions</a></p>
+    <p>© 2025 DECORA — All Rights Reserved</p>
+    <p>Designed &amp; Developed with ♥</p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+<script>
+let selectedPackage = null;
+
+const themePackages = {
+  Themed: {
+    Basic:    [{ img: "../img/ironman.jpeg",  title: "Iron Man Theme" }, { img: "../img/themed.jpeg",   title: "Fantasy Adventure" }, { img: "../img/avengers.jpeg", title: "Avengers Theme" }],
+    Moderate: [{ img: "../img/themed1.jpeg",  title: "Enchanted Forest" }, { img: "../img/themed2.jpeg",  title: "Space Odyssey" }, { img: "../img/themed3.jpeg",  title: "Underwater World" }],
+    Luxury:   [{ img: "../img/themed4.jpeg",  title: "Royal Palace" }, { img: "../img/themed5.jpeg",  title: "Hollywood Red Carpet" }, { img: "../img/themed6.jpeg",  title: "Fairy Tale Castle" }]
+  },
+  Engagement: {
+    Basic:    [{ img: "../img/engagement1.jpeg", title: "Classic Romance" }, { img: "../img/engagement2.jpeg", title: "Garden Party" }, { img: "../img/engagement3.jpeg", title: "Elegant Minimalist" }],
+    Moderate: [{ img: "../img/engagement4.jpeg", title: "Royal Engagement" }, { img: "../img/engagement5.jpeg", title: "Floral Fantasy" }, { img: "../img/engagement6.jpeg", title: "Vintage Glamour" }],
+    Luxury:   [{ img: "../img/engagement7.jpeg", title: "Grand Celebration" }, { img: "../img/engagement8.jpeg", title: "Luxury Ballroom" }, { img: "../img/engagement9.jpeg", title: "Five-Star Luxury" }]
+  },
+  BabyShower: {
+    Basic:    [{ img: "../img/baby1.jpeg", title: "Sweet Pastels" }, { img: "../img/baby2.jpeg", title: "Baby Animals" }, { img: "../img/baby3.jpeg", title: "Storybook Theme" }],
+    Moderate: [{ img: "../img/baby4.jpeg", title: "Enchanted Garden" }, { img: "../img/baby5.jpeg", title: "Royal Nursery" }, { img: "../img/baby6.jpeg", title: "Dreamy Clouds" }],
+    Luxury:   [{ img: "../img/baby7.jpeg", title: "Fairytale Palace" }, { img: "../img/baby8.jpeg", title: "Luxury Celebration" }, { img: "../img/babyshower.jpeg", title: "Grand Ballroom" }]
+  },
+  Seminar: {
+    Basic:    [{ img: "../img/seminar1.jpeg", title: "Professional Setup" }, { img: "../img/seminar2.jpeg", title: "Corporate Standard" }, { img: "../img/seminar3.jpeg", title: "Business Conference" }],
+    Moderate: [{ img: "../img/seminar4.jpeg", title: "Executive Meeting" }, { img: "../img/seminar5.jpeg", title: "Premium Conference" }, { img: "../img/seminar6.jpeg", title: "Corporate Summit" }],
+    Luxury:   [{ img: "../img/seminar7.jpeg", title: "International Conference" }, { img: "../img/seminar8.jpeg", title: "Executive Summit" }, { img: "../img/seminar.jpeg",  title: "Global Convention" }]
+  }
+};
+
+function getCurrentTheme() {
+  return new URLSearchParams(window.location.search).get("theme") || "Themed";
+}
+
+function renderCards(packageName, containerId) {
+  const gallery = document.getElementById(containerId);
+  gallery.innerHTML = "";
+  const theme = getCurrentTheme();
+  (themePackages[theme]?.[packageName] || []).forEach((item, idx) => {
+    const card = document.createElement("div");
+    card.classList.add("card");
+    card.innerHTML = `
+      <img src="${item.img}" alt="${item.title}" loading="lazy">
+      <div class="card-body"><h3>${item.title}</h3></div>
+    `;
+    card.addEventListener("click", () => handlePackageSelection(theme, packageName, idx + 1, item.title));
+    gallery.appendChild(card);
+  });
+}
+
+function handlePackageSelection(theme, packageType, decorationNumber, title) {
+  selectedPackage = { theme, packageType, decorationNumber, title };
+  redirectToBooking();
+}
+
+function showLoginPrompt()   { document.getElementById("loginPrompt").style.display = "flex"; }
+function closeLoginPrompt()  { document.getElementById("loginPrompt").style.display = "none"; }
+function openLoginFormFromPrompt() { closeLoginPrompt(); openLoginForm(); }
+
+function redirectToBooking() {
+  if (selectedPackage) {
+    const p = new URLSearchParams({ theme: selectedPackage.theme, package: selectedPackage.packageType, decoration: selectedPackage.decorationNumber, title: encodeURIComponent(selectedPackage.title) });
+    window.location.href = `booking.html?${p.toString()}`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const theme = getCurrentTheme();
+  document.getElementById("theme-title").innerText = theme.replace(/([A-Z])/g, ' $1').trim() + " Decoration Packages";
+  renderCards("Basic", "basicGallery");
+  renderCards("Moderate", "moderateGallery");
+  renderCards("Luxury", "luxuryGallery");
+});
+
+window.addEventListener('userLoggedIn', function () { if (selectedPackage) redirectToBooking(); });
+
+function toggleMenu() { document.getElementById('navMenu').classList.toggle('active'); }
+function openLoginForm()  { document.getElementById('loginModal').style.display = 'flex'; }
+function closeLoginForm() { document.getElementById('loginModal').style.display = 'none'; }
+function toggleSignup() {
+  const isSignup = document.getElementById('nameField').style.display === 'block';
+  document.getElementById('nameField').style.display = isSignup ? 'none' : 'block';
+  document.getElementById('loginTitle').textContent = isSignup ? 'Welcome back' : 'Create Account';
+  document.getElementById('loginSubmit').textContent = isSignup ? 'Login' : 'Sign Up';
+}
+document.getElementById('loginModal').addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
+</script>
+</body>
+</html>
