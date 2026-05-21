@@ -62,6 +62,16 @@ def serve_static(filename):
         logger.error(f"Error serving {filename}: {str(e)}")
         return f"Error: {str(e)}", 404
 
+@app.route('/img/<path:filename>')
+def serve_image(filename):
+    """Serve images from the img/ subfolder"""
+    img_dir = os.path.join(BASE_DIR, 'img')
+    try:
+        return send_from_directory(img_dir, filename)
+    except Exception as e:
+        logger.error(f"Error serving image {filename}: {str(e)}")
+        return f"Image {filename} not found", 404
+
 @app.route('/test')
 def test():
     return jsonify({"message": "✅ API is working!", "directory": BASE_DIR})
