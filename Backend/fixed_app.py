@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.secret_key = 'decora_admin_secret_key_2025'
 
 # Get the absolute path to the current directory
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
 print(f"📁 BASE DIRECTORY: {BASE_DIR}")
 
 @app.route('/')
