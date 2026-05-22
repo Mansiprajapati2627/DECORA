@@ -1,4 +1,5 @@
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, request, session
+from flask_cors import CORS
 import os
 import logging
 
@@ -8,53 +9,152 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = 'decora_admin_secret_key_2025'
 
-# Backend/ is the current dir, so root is one level up
-ROOT_DIR    = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-FRONTEND_DIR = os.path.join(ROOT_DIR, 'frontend')
-IMG_DIR      = os.path.join(ROOT_DIR, 'img')
+CORS(app, supports_credentials=True)
 
-print(f"📁 ROOT:     {ROOT_DIR}")
+# Directories
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+FRONTEND_DIR = os.path.join(ROOT_DIR, 'frontend')
+IMG_DIR = os.path.join(ROOT_DIR, 'img')
+
+print(f"📁 ROOT: {ROOT_DIR}")
 print(f"📁 FRONTEND: {FRONTEND_DIR}")
-print(f"📁 IMG:      {IMG_DIR}")
+print(f"📁 IMG: {IMG_DIR}")
+
+# Temporary user storage
+users = []
+
+# =========================
+# FRONTEND ROUTES
+# =========================
 
 @app.route('/')
 def serve_home():
-    try:
-        return send_from_directory(FRONTEND_DIR, 'index.html')
-    except Exception as e:
-        logger.error(f"Error: {str(e)}")
-        return f"Server Error: {str(e)}", 500
+    return send_from_directory(FRONTEND_DIR, 'index.html')
 
 @app.route('/img/<path:filename>')
 def serve_image(filename):
-    """Serve images from the root img/ folder"""
-    try:
-        return send_from_directory(IMG_DIR, filename)
-    except Exception as e:
-        logger.error(f"Error serving image {filename}: {str(e)}")
-        return f"Image {filename} not found", 404
+    return send_from_directory(IMG_DIR, filename)
 
 @app.route('/<path:filename>')
 def serve_static(filename):
-    """Serve all other static files from frontend/"""
-    try:
-        if '.' not in filename:
-            filename += '.html'
-        file_path = os.path.join(FRONTEND_DIR, filename)
-        if not os.path.exists(file_path):
-            return f"File {filename} not found", 404
-        return send_from_directory(FRONTEND_DIR, filename)
-    except Exception as e:
-        logger.error(f"Error serving {filename}: {str(e)}")
-        return f"Error: {str(e)}", 404
+
+    if '.' not in filename:
+        filename += '.html'
+
+    file_path = os.path.join(FRONTEND_DIR, filename)
+
+    if not os.path.exists(file_path):
+        return f"File {filename} not found", 404
+
+    return send_from_directory(FRONTEND_DIR, filename)
+
+# =========================
+# AUTH ROUTES
+# =========================
+
+@app.route('/api/register', methods=['POST'])
+def register():
+
+    data = request.json
+
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+
+    # Check if already exists
+    for user in users:
+        if user['email'] == email:
+            return jsonify({
+                "success": False,
+                "message": "User already exists"
+            })
+
+    new_user = {
+        "name": name,
+        "email": email,
+        "password": password
+    }
+
+    users.append(new_user)
+
+    session['user'] = {
+        "name": name,
+        "email": email
+    }
+
+    return jsonify({
+        "success": True,
+        "message": "Registration successful",
+        "user": session['user']
+    })
+
+@app.route('/api/login', methods=['POST'])
+def login():
+
+    data = request.json
+
+    email = data.get('email')
+    password = data.get('password')
+
+    for user in users:
+
+        if user['email'] == email and user['password'] == password:
+
+            session['user'] = {
+                "name": user['name'],
+                "email": user['email']
+            }
+
+            return jsonify({
+                "success": True,
+                "message": "Login successful",
+                "user": session['user']
+            })
+
+    return jsonify({
+        "success": False,
+        "message": "Invalid email or password"
+    })
+
+@app.route('/api/check-auth')
+def check_auth():
+
+    if 'user' in session:
+        return jsonify({
+            "logged_in": True,
+            "user": session['user']
+        })
+
+    return jsonify({
+        "logged_in": False
+    })
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+
+    session.pop('user', None)
+
+    return jsonify({
+        "success": True,
+        "message": "Logged out successfully"
+    })
+
+# =========================
+# TEST ROUTE
+# =========================
 
 @app.route('/test')
 def test():
+
     return jsonify({
-        "message": "✅ API is working!",
+        "message": "✅ DECORA backend working!",
         "frontend": FRONTEND_DIR,
         "img": IMG_DIR
     })
+
+# =========================
+# START APP
+# =========================
 
 if __name__ == '__main__':
     print("🚀 Starting DECORA Server...")
