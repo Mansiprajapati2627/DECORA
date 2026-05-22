@@ -30,6 +30,14 @@
       <li id="customizeLink" style="display:none;">
         <a href="#customize" onclick="openCustomizationForm()">Customization</a>
       </li>
+      <!-- Mobile-only login button inside menu -->
+      <li class="mobile-login-item" id="mobileLoginItem">
+        <button class="login-btn" onclick="openLoginForm();toggleMenu();" style="width:100%;">Login / Sign Up</button>
+      </li>
+      <li class="mobile-login-item mobile-user-item" id="mobileUserItem" style="display:none;">
+        <span id="mobileUserName" style="font-size:14px;color:var(--ink);padding:8px 0;display:block;"></span>
+        <button onclick="handleLogout();toggleMenu();" class="login-btn" style="width:100%;background:transparent;border:1.5px solid var(--rose);color:var(--rose);">Logout</button>
+      </li>
       <li class="user-actions">
         <div id="userSection">
           <button class="login-btn" onclick="openLoginForm()">Login / Sign Up</button>
@@ -455,6 +463,75 @@ function toggleSignup() {
   document.getElementById(id).addEventListener('click', function(e) {
     if (e.target === this) this.style.display = 'none';
   });
+});
+</script>
+
+<style>
+/* Mobile nav: hide desktop user-actions, show inline login items */
+@media (max-width: 768px) {
+  .user-actions { display: none !important; }
+  .mobile-login-item { display: list-item !important; }
+}
+@media (min-width: 769px) {
+  .mobile-login-item { display: none !important; }
+}
+</style>
+
+<script>
+// ===== AUTH UI — fixes "null" name display =====
+function updateUserUI(user) {
+  const userSection = document.getElementById('userSection');
+  const customizeLink = document.getElementById('customizeLink');
+  const mobileLoginItem = document.getElementById('mobileLoginItem');
+  const mobileUserItem = document.getElementById('mobileUserItem');
+  const mobileUserName = document.getElementById('mobileUserName');
+
+  if (user && user.email) {
+    // Never show "null" — fall back to email prefix
+    const displayName = (user.name && user.name !== 'null' && user.name !== 'undefined' && user.name.trim() !== '')
+      ? user.name.trim()
+      : user.email.split('@')[0];
+
+    userSection.innerHTML = `
+      <span style="display:flex;align-items:center;gap:10px;">
+        <i class="fas fa-user-circle" style="font-size:20px;color:var(--rose);"></i>
+        <span style="font-size:14px;font-weight:500;color:var(--ink);">${displayName}</span>
+        <button class="login-btn" onclick="handleLogout()" style="margin-left:4px;">Logout</button>
+      </span>`;
+
+    if (customizeLink) customizeLink.style.display = 'list-item';
+    if (mobileLoginItem) mobileLoginItem.style.display = 'none';
+    if (mobileUserItem) { mobileUserItem.style.display = 'list-item'; if(mobileUserName) mobileUserName.textContent = displayName; }
+  } else {
+    userSection.innerHTML = `<button class="login-btn" onclick="openLoginForm()">Login / Sign Up</button>`;
+    if (customizeLink) customizeLink.style.display = 'none';
+    if (mobileLoginItem) mobileLoginItem.style.display = '';
+    if (mobileUserItem) mobileUserItem.style.display = 'none';
+  }
+}
+
+async function handleLogout() {
+  try { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); } catch(e) {}
+  updateUserUI(null);
+  window.dispatchEvent(new Event('userLoggedOut'));
+}
+
+// Check auth on load
+(async function() {
+  try {
+    const res = await fetch('/api/check-auth', { credentials: 'include' });
+    const data = await res.json();
+    if (data.logged_in) updateUserUI(data.user);
+  } catch(e) {}
+})();
+
+// Also hook into userLoggedIn event (fired by api.js/script.js after login)
+window.addEventListener('userLoggedIn', async function() {
+  try {
+    const res = await fetch('/api/check-auth', { credentials: 'include' });
+    const data = await res.json();
+    if (data.logged_in) updateUserUI(data.user);
+  } catch(e) {}
 });
 </script>
 </body>

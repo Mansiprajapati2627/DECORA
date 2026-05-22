@@ -258,5 +258,56 @@ function toggleSignup() {
 }
 document.getElementById('loginModal').addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
 </script>
+
+<style>
+@media (max-width: 768px) {
+  .user-actions { display: none !important; }
+  .mobile-login-item { display: list-item !important; }
+}
+@media (min-width: 769px) {
+  .mobile-login-item { display: none !important; }
+}
+</style>
+<script>
+function updateUserUI(user) {
+  const userSection = document.getElementById('userSection');
+  const customizeLink = document.getElementById('customizeLink');
+  const bookingLink = document.getElementById('bookingLink');
+  if (user && user.email) {
+    const displayName = (user.name && user.name !== 'null' && user.name !== 'undefined' && user.name.trim() !== '')
+      ? user.name.trim() : user.email.split('@')[0];
+    userSection.innerHTML = `<span style="display:flex;align-items:center;gap:10px;">
+      <i class="fas fa-user-circle" style="font-size:20px;color:var(--rose);"></i>
+      <span style="font-size:14px;font-weight:500;color:var(--ink);">${displayName}</span>
+      <button class="login-btn" onclick="handleLogout()">Logout</button>
+    </span>`;
+    if (customizeLink) customizeLink.style.display = 'list-item';
+    if (bookingLink) bookingLink.style.display = 'list-item';
+  } else {
+    userSection.innerHTML = `<button class="login-btn" onclick="openLoginForm()">Login / Sign Up</button>`;
+    if (customizeLink) customizeLink.style.display = 'none';
+    if (bookingLink) bookingLink.style.display = 'none';
+  }
+}
+async function handleLogout() {
+  try { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); } catch(e) {}
+  updateUserUI(null);
+}
+(async function() {
+  try {
+    const res = await fetch('/api/check-auth', { credentials: 'include' });
+    const data = await res.json();
+    if (data.logged_in) updateUserUI(data.user);
+  } catch(e) {}
+})();
+window.addEventListener('userLoggedIn', async function() {
+  try {
+    const res = await fetch('/api/check-auth', { credentials: 'include' });
+    const data = await res.json();
+    if (data.logged_in) updateUserUI(data.user);
+  } catch(e) {}
+});
+</script>
+
 </body>
 </html>
