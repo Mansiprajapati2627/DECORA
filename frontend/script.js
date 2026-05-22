@@ -121,7 +121,7 @@ function setupLoginForm() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        full_name: userName.value,
+                        name: userName.value,
                         email: userEmail.value,
                         password: userPassword.value
                     })
@@ -247,7 +247,7 @@ function updateUserInterface() {
         userSection.innerHTML = `
             <div class="user-info">
                 <i class="fas fa-user-circle"></i>
-                <span>${currentUser.name}</span>
+                <span>${(currentUser.name && currentUser.name !== "null" && currentUser.name.trim()) ? currentUser.name.trim() : currentUser.email.split("@")[0]}</span>
                 <button class="login-btn" onclick="logout()" style="margin-left:10px; cursor: pointer;">Logout</button>
             </div>
         `;

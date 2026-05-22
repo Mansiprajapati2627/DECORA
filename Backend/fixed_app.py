@@ -57,7 +57,7 @@ def register():
 
     data = request.json
 
-    name = data.get('name')
+    name = data.get('name') or data.get('full_name')
     email = data.get('email')
     password = data.get('password')
 
@@ -138,6 +138,86 @@ def logout():
         "success": True,
         "message": "Logged out successfully"
     })
+
+
+# =========================
+# BOOKINGS ROUTE
+# =========================
+
+bookings = []
+
+@app.route('/api/bookings', methods=['POST'])
+def create_booking():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Please login to book."})
+    data = request.json
+    booking = {
+        "booking_id": f"DEC{len(bookings)+1:04d}",
+        "user": session['user']['email'],
+        "bookingname": data.get('bookingname'),
+        "phone": data.get('phone'),
+        "event": data.get('event'),
+        "date": data.get('date'),
+        "time": data.get('time'),
+    }
+    bookings.append(booking)
+    return jsonify({"success": True, "booking_id": booking['booking_id'], "message": "Booking confirmed!"})
+
+@app.route('/api/bookings', methods=['GET'])
+def get_bookings():
+    return jsonify({"success": True, "bookings": bookings})
+
+# =========================
+# REVIEWS ROUTE
+# =========================
+
+reviews = []
+
+@app.route('/api/reviews', methods=['POST'])
+def create_review():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Please login to submit a review."})
+    data = request.json
+    review = {
+        "review_id": f"REV{len(reviews)+1:04d}",
+        "user": session['user']['email'],
+        "reviewname": data.get('reviewname') or session['user'].get('name') or session['user']['email'].split('@')[0],
+        "rating": data.get('rating'),
+        "review": data.get('review'),
+    }
+    reviews.append(review)
+    return jsonify({"success": True, "message": "Review submitted successfully!"})
+
+@app.route('/api/reviews', methods=['GET'])
+def get_reviews():
+    return jsonify({"success": True, "reviews": reviews})
+
+# =========================
+# CUSTOMIZATIONS ROUTE
+# =========================
+
+customizations = []
+
+@app.route('/api/customizations', methods=['POST'])
+def create_customization():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Please login to submit a customization request."})
+    data = request.json
+    custom = {
+        "custom_id": f"CUS{len(customizations)+1:04d}",
+        "user": session['user']['email'],
+        "customName": data.get('customName') or session['user'].get('name'),
+        "customEventType": data.get('customEventType'),
+        "customDate": data.get('customDate'),
+        "customTime": data.get('customTime'),
+        "customDescription": data.get('customDescription'),
+    }
+    customizations.append(custom)
+    return jsonify({"success": True, "message": "Customization request submitted!"})
+
+@app.route('/api/customizations', methods=['GET'])
+def get_customizations():
+    return jsonify({"success": True, "customizations": customizations})
 
 # =========================
 # TEST ROUTE
